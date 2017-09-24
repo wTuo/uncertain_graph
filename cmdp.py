@@ -1,22 +1,18 @@
 import networkx as nx
+from networkx.algorithms.connectivity import minimum_st_edge_cut
+from networkx.algorithms.flow import build_residual_network, edmonds_karp
+
 import copy
 import pickle
 import os
 from collections import deque
 import random
 import pickle
-from networkx.algorithms.flow import build_residual_network, edmonds_karp
-
 import itertools
-import randomgraph
-
-from networkx.algorithms.connectivity import minimum_st_edge_cut
-
 import numpy as np
-
-
 import pydot
 
+import randomgraph
 
 def gengraph(edgelist, s, d, p):
     g=nx.DiGraph(edgelist)
@@ -265,7 +261,6 @@ def process_with_mdp(graphinfo, pklfile):
     mdp(G, s, d, nodes, existingedges, undetected)
 
 if __name__ == '__main__':
-    # g = nx.DiGraph()
     # edgelist=[(0,1),(1,2),(2,10),(2,5),(0,3),(3,4),(4,5),(5,10),(0,6),(6,7),(7,8),(8,9),(9,10)]
     # edgelist=[(0,1),(1,2),(2,10),(2,5),(5,10),(0,6),(6,7),(7,8),(8,9),(9,10)]
     # edgelist=[(0,1),(1,2),(2,10),(0,3),(3,4),(4,10),(4,6),(6,7),(7,8), (8,10)]
@@ -296,7 +291,6 @@ if __name__ == '__main__':
     # edgelist = [(0,1),(1,3),(3,2),(0,4),(4,5),(5,6),(6,2)]
     # edgelist = [(0,1),(1,3),(3,5),(5,8),(3,8),(3,9),(9,10),(10,8),(0,2),(2,4),(4,8)]
     edgesnum =len(edgelist) #a global variable as a substitute for len(undetected)
-    # res1 = open('res1.txt', 'wb')
     PIs=[]
     cnt=1
     for p in np.arange(0.01, 1.0, 0.01):
