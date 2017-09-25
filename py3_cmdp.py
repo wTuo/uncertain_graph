@@ -71,7 +71,7 @@ def compare_strategies(PIs):
         return True
 
     def strategy_equivalence(PIa,PIb):
-        print "xxxxxxxx"
+        print ("xxxxxxxx")
         mean_ = self_apply_strategy(PIb[0],PIb[1],PIb[2])
         if mut_apply_strategy(PIa[0],PIb[1],PIb[2], mean_):
             return True
@@ -83,7 +83,7 @@ def compare_strategies(PIs):
     c=0
     for PI in PIs:
         if not shallow_compare_2strategy(PI_tmp[0],PI[0]) and not strategy_equivalence(PI_tmp,PI):
-            print "index:", c
+            print ("index:", c)
             return False
         c+=1
     return True
@@ -138,10 +138,10 @@ def mdp(G, s, d, nodes, existingedges, undetected):
         return cnt, stateSpace
 
     def getPI(G, s, d):
-        PI = [-1 for item in xrange(3**len(undetected))]
-        q = [decimal.Decimal(str(-99999999)) for item in xrange(3**len(undetected))]
-        state = [[] for item in xrange(1 + len(undetected))]
-        for i in xrange(3**len(undetected)):
+        PI = [-1 for item in range(3**len(undetected))]
+        q = [-99999999 for item in range(3**len(undetected))]
+        state = [[] for item in range(1 + len(undetected))]
+        for i in range(3**len(undetected)):
             cnt, stateSpace = getStateSpace(i)
             state[cnt].append(i) #state[] represent S_|E|, recording states by using  decimal number
             nodes = G.ubound.nodes()
@@ -175,8 +175,8 @@ def mdp(G, s, d, nodes, existingedges, undetected):
                     e_star = -1
                     for id, item in enumerate(stateSpace):
                         if item == 2:
-                            tmp = -decimal.Decimal(str(undetected[id][3])) + decimal.Decimal(str(undetected[id][2])) * q[j - 3**id] + \
-                                decimal.Decimal(str((1 - undetected[id][2]))) * q[j - 2*(3**id)]
+                            tmp = undetected[id][3] + undetected[id][2] * q[j - 3**id] + \
+                                (1 - undetected[id][2]) * q[j - 2*(3**id)]
                             if q[j] < tmp:
                                 e_star = id
                                 q[j] = tmp
@@ -240,7 +240,7 @@ def self_apply_strategy(PI, q, undetected):
         mean += cost*ug_prob(g, undetected)
     theory_optimal = decimal.Decimal(str(-q[3**len(undetected)-1]))
     if theory_optimal != mean:
-        print "self check false"
+        print("self check false")
         raise
     else:
         return mean
@@ -289,8 +289,8 @@ def mut_apply_strategy(PI, q, undetected, mean_):
             cost += undetected[e][3]
         mean += cost*ug_prob(g, undetected)
     if mean != mean_:
-        print "mutual check false"
-        print mean, mean_, q[3**len(undetected) - 1]
+        print("mutual check false")
+        print (mean, mean_, q[3**len(undetected) - 1])
         # print mean.hex(), mean_.hex(), q[3**len(undetected) - 1].hex()
         return False
     else:
@@ -355,11 +355,11 @@ if __name__ == '__main__':
     for p in np.arange(0.01, 1.0, 0.01):
         graphinfo = gengraph(edgelist,s,d, p)
         process_with_mdp(graphinfo, 'pkl/mdpgraphinfo')
-        print cnt
+        print(cnt)
         cnt+=1
     # res1.close()
-    print "all PIs have been obtained"
+    print("all PIs have been obtained")
     if compare_strategies(PIs):
-        print True
+        print(True)
         vis_PI(PIs[0][0], PIs[0][2], PIs[0][1], "decision tree")
 
