@@ -48,36 +48,51 @@ def decinmal2ternary(decinmal,length):
     return ''.join(str(e) for e in stateSpace)  #list to string
 
 
-def compare_strategies(PIs):
-    def shallow_compare_2strategy(PIa,PIb):
-        sta=[]
-        stb=[]
-        state_a = 3**edgesnum - 1
-        state_b = 3**edgesnum - 1
-        sta.append(state_a)
-        stb.append(state_b)
-        while len(sta)!=0 and len(stb) != 0:
-            state_a = sta.pop()
-            state_b = stb.pop()
-            if PIa[state_a] != PIb[state_b]:
-                return False
-            if PIa[state_a] == -1:
-                continue
-            e=PIa[state_a]
-            sta.append(state_a - int(3**e))
-            sta.append(state_a - int(2*(3**e)))
-            stb.append(state_b - int(3**e))
-            stb.append(state_b - int(2*(3**e)))
-        return True
-
-    def strategy_equivalence(PIa,PIb):
-        print "xxxxxxxx"
-        mean_ = self_apply_strategy(PIb[0],PIb[1],PIb[2])
-        if mut_apply_strategy(PIa[0],PIb[1],PIb[2], mean_):
-            return True
-        else:
+def shallow_compare_2strategy(PIa,PIb):
+    sta=[]
+    stb=[]
+    state_a = 3**edgesnum - 1
+    state_b = 3**edgesnum - 1
+    sta.append(state_a)
+    stb.append(state_b)
+    while len(sta)!=0 and len(stb) != 0:
+        state_a = sta.pop()
+        state_b = stb.pop()
+        if PIa[state_a] != PIb[state_b]:
             return False
+        if PIa[state_a] == -1:
+            continue
+        e=PIa[state_a]
+        sta.append(state_a - int(3**e))
+        sta.append(state_a - int(2*(3**e)))
+        stb.append(state_b - int(3**e))
+        stb.append(state_b - int(2*(3**e)))
+    #double check
+    if len(sta) ==0 and len(stb) == 0: # this step garentee sta and stb are absolutely same 
+        print True
+        return True
+    else:
+        print "double check false"
+        return False
 
+def strategy_equivalence(PIa,PIb):
+    print "xxxxxxxx"
+    mean_ = self_apply_strategy(PIb[0],PIb[1],PIb[2])
+    if mut_apply_strategy(PIa[0],PIb[1],PIb[2], mean_):
+        return True
+    else:
+        return False
+
+
+
+def compare_while_run(PIa,PIb): #to save memory, just compare two stategy each time while running MDP
+    if not shallow_compare_2strategy(PIa[0],PIb[0]) and not strategy_equivalence(PIa,PIb):
+        return False
+    return True
+
+
+
+def compare_all_strategies(PIs): #PIs is the collection of all the strategies
     # strategies = [e[0] for e in PIs] 
     PI_tmp=PIs[0]
     c=0
@@ -175,7 +190,7 @@ def mdp(G, s, d, nodes, existingedges, undetected):
                     e_star = -1
                     for id, item in enumerate(stateSpace):
                         if item == 2:
-                            tmp = -decimal.Decimal(str(undetected[id][3])) + decimal.Decimal(str(undetected[id][2])) * q[j - 3**id] + \
+                            tmp = decimal.Decimal(str(-undetected[id][3])) + decimal.Decimal(str(undetected[id][2])) * q[j - 3**id] + \
                                 decimal.Decimal(str((1 - undetected[id][2]))) * q[j - 2*(3**id)]
                             if q[j] < tmp:
                                 e_star = id
@@ -187,13 +202,14 @@ def mdp(G, s, d, nodes, existingedges, undetected):
                         raise
         # for k,v in qm.iteritems():
         #     print k,v
-        # print "optimal:", q[3**len(undetected)-1]
+        print "q="+str(undetected[0][2])+",", q[3**len(undetected)-1]
         # cnt = getStateSpace(1)
         return PI, q
 
     PI,  q = getPI(G, s, d)
-    PIs.append((PI,q,undetected))
+    # PIs.append((PI,q,undetected))
     # vis_PI(PI, undetected, q,"p="+str(undetected[0][2]))
+    return (PI, q, undetected)
 
 def self_apply_strategy(PI, q, undetected):
     def gen_all_ug(undetected):
@@ -310,7 +326,15 @@ def process_with_mdp(graphinfo, pklfile):
     undetected = graphinfo[3]
     existingedges = []
     G = randomgraph.Randomgraph(s, d, nodes, existingedges, undetected)
-    mdp(G, s, d, nodes, existingedges, undetected)
+    global PI_template
+    if cnt == 1:
+        PI_template = mdp(G, s, d, nodes, existingedges, undetected)
+    else:
+        PI_ = mdp(G, s, d, nodes, existingedges, undetected)
+    if cnt >=2 : #can compare
+        if not compare_while_run(PI_template,PI_):
+            print "a different strategy has been found"
+            raise
 
 if __name__ == '__main__':
     # edgelist=[(0,1),(1,2),(2,10),(2,5),(0,3),(3,4),(4,5),(5,10),(0,6),(6,7),(7,8),(8,9),(9,10)]
@@ -342,24 +366,31 @@ if __name__ == '__main__':
     # edgelist=[(0,1),(1,2),(0,2)]
     # edgelist=[(0,1),(1,2),(0,3),(3,4),(4,2)]
     # edgelist = [(0,1),(1,3),(3,2),(0,4),(4,5),(5,6),(6,2)]
-    # edgelist =[(0,1),(1,2),(2,4),(4,5),(0,3),(3,4),(3,5)] #_2, s=0, d=5
+    edgelist =[(0,1),(1,2),(2,4),(4,5),(0,3),(3,4),(3,5)] #_2, s=0, d=5
     # edgelist =[(0,1),(0,2),(1,3),(3,7),(3,6),(6,7),(3,4),(4,7),(2,5),(5,7)] #_3, s=0, d=7
-    edgelist =[(0,1),(1,6),(6,7),(7,8),(1,8),(1,3),(3,8),(0,2),(2,4),(4,8),(2,8),(2,5),(5,8)] #_4, s=0, d=8
+    # edgelist =[(0,1),(1,6),(6,7),(7,8),(1,8),(1,3),(3,8),(0,2),(2,4),(4,8),(2,8),(2,5),(5,8)] #_4, s=0, d=8
+    # edgelist =[(0,1),(1,8),(0,2),(2,4),(4,5),(5,6),(6,8),(0,3),(3,4),(5,7),(7,8)] #_5, s=0, d=8
+    # edgelist = [(0,1),(1,3),(3,4),(0,2),(2,4),(1,2),(2,3)] #_6, s=0, d=4
 
+    # edgelist = [(0,1),(1,3),(3,6),(1,6),(0,2),(2,6),(2,4),(4,5),(5,6)] #_7, s=0, d=6
+    # edgelist = [(0,2),(2,3),(3,6),(2,6),(0,1),(1,6),(1,4),(4,5),(5,6)] #_7_, s=0, d=6
+
+    # edgelist =[(0,2),(2,6),(6,7),(7,8),(2,8),(2,3),(3,8),(0,1),(1,4),(4,8),(1,8),(1,5),(5,8)] #_4_, s=0, d=8
     s=0
-    d=8
+    d=5
 
     edgesnum =len(edgelist) #a global variable as a substitute for len(undetected)
-    PIs=[]
+    # PIs=[]
+    PI_template=()
     cnt=1
-    for p in np.arange(0.01, 1.0, 0.01):
+    for p in np.arange(0.1, 1.0, 0.1):
         graphinfo = gengraph(edgelist,s,d, p)
         process_with_mdp(graphinfo, 'pkl/mdpgraphinfo')
-        print cnt
+        # print cnt
         cnt+=1
     # res1.close()
-    print "all PIs have been obtained"
-    if compare_strategies(PIs):
-        print True
-        vis_PI(PIs[0][0], PIs[0][2], PIs[0][1], "decision tree")
+    print "all PIs are equal"
+    # if compare_strategies(PIs):
+    #     print True
+    vis_PI(PI_template[0], PI_template[2], PI_template[1], "decision tree")
 
