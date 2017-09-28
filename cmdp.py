@@ -138,12 +138,22 @@ def vis_PI(PI, undetected, q, title):
             PI_g.add_edge(pydot.Edge(fork_p, mstate_p, color = "red"))
             PI_g.write_pdf("PI-vis.pdf")
 
+def equivalence_action_at_first_step(min_value, stateSpace, q, undetected):
+    eq_edges = []
+    init_state = 3**len(undetected) - 1
+    for id, item in enumerate(stateSpace):
+        if item == 2:#iterate all the undetected edge of a state 
+            if min_value == decimal.Decimal(str(-undetected[id][3])) + decimal.Decimal(str(undetected[id][2])) * q[init_state - 3**id] + \
+                decimal.Decimal(str((1 - undetected[id][2]))) * q[init_state - 2*(3**id)]:
+                eq_edges.append((undetected[id][0],undetected[id][1]))
+    return eq_edges
+
 
 def mdp(G, s, d, nodes, existingedges, undetected):
 
     def getStateSpace(num):   #convert decinmal number to ternary number # 2,1,0 represent undetected,exist,not exist respectivelly
         length = len(undetected)
-        stateSpace = []  #stateSpace is a list but just represent one state
+        stateSpace = []  #stateSpace is a list type but just represent one state, e.g. [2,2,2,2,...,2] represents the intial state(no edge has been detected) 
         cnt = 0 #cnt represent the number of detected edges 
         for i in range(length):
             stateSpace.append(num % 3)
@@ -158,7 +168,7 @@ def mdp(G, s, d, nodes, existingedges, undetected):
         state = [[] for item in xrange(1 + len(undetected))]
         for i in xrange(3**len(undetected)):
             cnt, stateSpace = getStateSpace(i)
-            state[cnt].append(i) #state[] represent S_|E|, recording states by using  decimal number
+            state[cnt].append(i) #state[] represent S_|E| which is a collection of states, each state of the collection is recorded by using decimal number
             nodes = G.ubound.nodes()
             ug = nx.DiGraph()
             lg = nx.DiGraph()
@@ -195,6 +205,8 @@ def mdp(G, s, d, nodes, existingedges, undetected):
                             if q[j] < tmp:
                                 e_star = id
                                 q[j] = tmp
+                    if i == 0: # state[0] represent the intial state, and state[0] just has one element in it,which is a decimal number whose value is 3**len(undetected)-1
+                        print "equivalence action at first step,", equivalence_action_at_first_step(q[3**len(undetected) - 1], stateSpace, q, undetected) #actually, at this step,3*len(undetected) -1 is equal to j
                     if e_star != -1:
                         PI[j] = e_star
                     else:
@@ -360,13 +372,12 @@ if __name__ == '__main__':
     # edgelist = [(0,1),(1,2),(2,7),(0,3),(3,4),(4,7),(7,8),(8,9),(8,10),(9,11),(10,11)]
 
 
-    # edgelist=[(0,1),(1,3),(3,5),(5,8),(3,8),(0,2),(2,4),(4,8),(3,9),(9,10),(10,8)]#_1  
-    # edgelist=[(0,1),(1,3),(3,5),(5,8),(3,8),(0,2),(2,4),(4,7),(7,8),(4,8),(3,9),(9,10),(10,8)] #too large to run 
+    edgelist=[(0,1),(1,3),(3,5),(5,8),(3,8),(0,2),(2,4),(4,8),(3,9),(9,10),(10,8)] #_1, s=0, d=8  
     # edgelist=[(0,1),(1,3),(3,4),(4,5),(5,7),(0,2),(2,3),(4,6),(6,7)]
     # edgelist=[(0,1),(1,2),(0,2)]
     # edgelist=[(0,1),(1,2),(0,3),(3,4),(4,2)]
     # edgelist = [(0,1),(1,3),(3,2),(0,4),(4,5),(5,6),(6,2)]
-    edgelist =[(0,1),(1,2),(2,4),(4,5),(0,3),(3,4),(3,5)] #_2, s=0, d=5
+    # edgelist =[(0,1),(1,2),(2,4),(4,5),(0,3),(3,4),(3,5)] #_2, s=0, d=5
     # edgelist =[(0,1),(0,2),(1,3),(3,7),(3,6),(6,7),(3,4),(4,7),(2,5),(5,7)] #_3, s=0, d=7
     # edgelist =[(0,1),(1,6),(6,7),(7,8),(1,8),(1,3),(3,8),(0,2),(2,4),(4,8),(2,8),(2,5),(5,8)] #_4, s=0, d=8
     # edgelist =[(0,1),(1,8),(0,2),(2,4),(4,5),(5,6),(6,8),(0,3),(3,4),(5,7),(7,8)] #_5, s=0, d=8
@@ -376,14 +387,21 @@ if __name__ == '__main__':
     # edgelist = [(0,2),(2,3),(3,6),(2,6),(0,1),(1,6),(1,4),(4,5),(5,6)] #_7_, s=0, d=6
 
     # edgelist =[(0,2),(2,6),(6,7),(7,8),(2,8),(2,3),(3,8),(0,1),(1,4),(4,8),(1,8),(1,5),(5,8)] #_4_, s=0, d=8
+
+    # edgelist = [(0,1),(1,3),(3,6),(6,7),(0,4),(4,7),(0,2),(2,5),(5,7)] #_8, s=0, d=7
+
+    # edgelist = [(0,1),(1,3),(3,4),(0,4),(4,6),(0,2),(2,6),(2,5),(5,6)] #_9, s=0, d=6
+
+    # edgelist = [(1,6),(3,1),(4,3),(4,6),(0,4),(2,6),(0,2),(5,2),(0,5)] #_9_, s=0, d=6, description: revert path diretion
+    edgelist = [(0,1),(1,4),(4,10),(1,10), (0,2),(2,10), (2,5),(5,6),(6,10),(0,3),(3,10),(3,7),(7,8),(8,9),(9,10)]
     s=0
-    d=5
+    d=10
 
     edgesnum =len(edgelist) #a global variable as a substitute for len(undetected)
     # PIs=[]
     PI_template=()
     cnt=1
-    for p in np.arange(0.1, 1.0, 0.1):
+    for p in np.arange(0.1, 0.2, 0.1):
         graphinfo = gengraph(edgelist,s,d, p)
         process_with_mdp(graphinfo, 'pkl/mdpgraphinfo')
         # print cnt
